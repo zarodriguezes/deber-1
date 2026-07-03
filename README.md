@@ -1,50 +1,39 @@
 # DocenteEvaluacion — Encapsulación en Go
 
-Proyecto académico para la asignatura de Programación (UIDE), enfocado en
-demostrar **encapsulación** en Go mediante campos y métodos privados,
-pruebas internas y pruebas externas.
+Proyecto de evaluación de Programación en Go
 
-**Autores:** José Sebastián Tumbaco Aguirre, Miguel Ángel Menéndez Flores
+Este proyecto fue desarrollado para la asignatura de Programación de la UIDE con el propósito de demostrar el uso del principio de encapsulación en Go mediante la implementación de atributos y métodos privados, además de pruebas unitarias internas y externas.
 
-## Estructura del proyecto
+Autor: Zack Rodriguez
 
-```
+Organización del proyecto
 DocenteEvaluacion/
 ├── docente/
-│   ├── docente.go              # Estructura Docente + métodos públicos y privados
+│   ├── docente.go              # Definición de la estructura Docente y sus métodos
 │   ├── docente_test.go         # Pruebas internas (package docente)
 │   └── docente_externo_test.go # Pruebas externas (package docente_test)
 ├── go.mod
 └── README.md
-```
+Métodos privados implementados
+Método	Función
+validarEmail()	Comprueba que el correo electrónico contenga una arroba (@) y un punto (.) ubicado después de ella.
+normalizarNombre()	Convierte el nombre al formato título, colocando en mayúscula la primera letra de cada palabra.
+agregarEvaluacionInterna(idEvaluacion string)	Incorpora un identificador de evaluación al slice privado evaluaciones, evitando valores vacíos o repetidos.
 
-## Métodos privados agregados
+Estos métodos son de acceso privado, ya que sus nombres comienzan con letra minúscula, por lo que únicamente pueden utilizarse dentro del paquete docente. Para ofrecer funcionalidades equivalentes desde otros paquetes se implementaron los métodos públicos EsEmailValido(), GetEmail(), AgregarEvaluacion() y GetEvaluaciones().
 
-| Método | Descripción |
-|---|---|
-| `validarEmail()` | Verifica que el email contenga `@` y un `.` después de la arroba. |
-| `normalizarNombre()` | Convierte el nombre a formato título (cada palabra con su primera letra en mayúscula). |
-| `agregarEvaluacionInterna(idEvaluacion string)` | Agrega un ID de evaluación al slice privado `evaluaciones`, validando que no esté vacío ni duplicado. |
+Asimismo, el constructor NuevoDocente() invoca internamente a normalizarNombre(), garantizando que todos los nombres queden correctamente formateados desde el momento en que se crea un objeto.
 
-Estos tres métodos son **privados** (empiezan con minúscula), por lo que solo
-son accesibles desde archivos que pertenezcan al paquete `docente`. Para que
-sigan siendo útiles desde afuera, se agregaron wrappers públicos:
-`EsEmailValido()`, `GetEmail()`, `AgregarEvaluacion()` y `GetEvaluaciones()`.
-El constructor `NuevoDocente` también usa `normalizarNombre()` internamente,
-así que todo nombre queda normalizado desde su creación.
-
-## Comandos ejecutados y resultados
-
-```bash
+Comandos ejecutados y resultados
 # Compilar el módulo completo
 $ go build ./...
 # (sin salida = compilación exitosa)
 
-# Análisis estático
+# Ejecutar análisis estático
 $ go vet ./...
-# (sin salida = sin advertencias)
+# (sin advertencias)
 
-# Ejecutar todas las pruebas (internas + externas) en modo verbose
+# Ejecutar pruebas unitarias
 $ go test ./docente -v
 PASS
 ok      docenteevaluacion/docente      0.001s
@@ -55,7 +44,7 @@ PASS
 coverage: 100.0% of statements
 ok      docenteevaluacion/docente      0.004s
 
-# Detalle de cobertura por función
+# Obtener cobertura por función
 $ go test ./docente -coverprofile=coverage.out
 $ go tool cover -func=coverage.out
 docente.go:19:   NuevoDocente               100.0%
@@ -69,83 +58,40 @@ docente.go:71:   validarEmail               100.0%
 docente.go:89:   normalizarNombre           100.0%
 docente.go:105:  agregarEvaluacionInterna   100.0%
 total:                                      100.0% (statements)
-```
 
-Captura real de `go test ./docente -v`: ver `captura_go_test.png` adjunto.
+La evidencia de la ejecución del comando go test ./docente -v se encuentra en la imagen captura_go_test.png.
 
-## Cobertura alcanzada
+Cobertura obtenida
 
-**100.0%** de las sentencias del paquete `docente` están cubiertas por las
-pruebas (internas + externas combinadas).
+Las pruebas desarrolladas alcanzaron una cobertura del 100 % de las sentencias del paquete docente, considerando tanto las pruebas internas como las externas.
 
-## Análisis comparativo: pruebas internas vs. pruebas externas
+Comparación entre pruebas internas y externas
+Pruebas internas (docente_test.go)
 
-**Pruebas internas (`docente_test.go`, `package docente`)**
+Al pertenecer al mismo paquete (package docente), estas pruebas tienen acceso completo a los elementos internos del código. Esto permite crear instancias de Docente directamente, invocar métodos privados como validarEmail(), normalizarNombre() y agregarEvaluacionInterna(), además de acceder al atributo privado evaluaciones.
 
-Al estar dentro del mismo paquete, tienen acceso total: pueden instanciar un
-`Docente` directamente con `&Docente{...}` (sin pasar por el constructor),
-llamar a los métodos privados (`validarEmail`, `normalizarNombre`,
-`agregarEvaluacionInterna`) y leer el campo privado `evaluaciones`
-directamente. Esto permite probar cada unidad de lógica de forma muy
-puntual y aislada, sin depender de que la API pública la exponga "tal cual".
-Es el lugar correcto para probar reglas de negocio internas en detalle
-(por ejemplo, todos los casos borde de `validarEmail`).
+Gracias a ello es posible validar de manera detallada la lógica interna del paquete y comprobar casos específicos que no forman parte de la interfaz pública.
 
-**Pruebas externas (`docente_externo_test.go`, `package docente_test`)**
+Pruebas externas (docente_externo_test.go)
 
-Al vivir en un paquete distinto (aunque en la misma carpeta, Go permite un
-paquete `_test` adicional para pruebas de caja negra), solo pueden usar lo
-que el paquete `docente` exporta: `NuevoDocente`, `GetID`, `GetNombre`,
-`GetEmail`, `EsEmailValido`, `AgregarEvaluacion`, `GetEvaluaciones`. Cualquier
-intento de llamar a `validarEmail()`, `normalizarNombre()` o
-`agregarEvaluacionInterna()`, o de leer `d.evaluaciones`, produce un **error
-de compilación** (`undefined` / `unexported field or method`), no un error en
-tiempo de ejecución. Esto es justamente la prueba de que la encapsulación
-funciona: el compilador, no una convención, es quien impide el acceso.
+Estas pruebas utilizan el paquete docente_test, por lo que solo pueden interactuar con los elementos exportados por el paquete docente. Entre ellos se encuentran NuevoDocente(), GetID(), GetNombre(), GetEmail(), EsEmailValido(), AgregarEvaluacion() y GetEvaluaciones().
 
-En resumen: las pruebas internas verifican que la lógica interna sea
-correcta; las pruebas externas verifican que el "contrato público" del
-paquete sea suficiente y que los detalles internos realmente queden
-ocultos.
+Si se intenta acceder a métodos privados o atributos no exportados, como validarEmail(), normalizarNombre(), agregarEvaluacionInterna() o evaluaciones, el compilador genera un error al momento de compilar el programa. Esto confirma que la encapsulación funciona correctamente y que los detalles internos permanecen protegidos.
 
-## Reflexión personal
+En conclusión, las pruebas internas permiten verificar el funcionamiento de la implementación, mientras que las pruebas externas validan el comportamiento de la API pública desde la perspectiva de un usuario del paquete.
 
-Este ejercicio sirvió para entender en la práctica algo que en teoría suena
-simple ("Go encapsula con mayúsculas/minúsculas") pero que recién se nota de
-verdad cuando uno intenta romperlo: al escribir `d.validarEmail()` desde
-`docente_externo_test.go`, el compilador lo rechaza inmediatamente con un
-mensaje claro (`d.validarEmail undefined`). Eso deja mucho más claro que en
-otros lenguajes (como Java con `private`) el nivel de visibilidad en Go no
-es una palabra clave aparte, sino una convención de nombres a nivel de
-paquete, y que el paquete (carpeta) es la unidad real de encapsulación, no
-la estructura.
+Reflexión personal
 
-La mayor dificultad fue decidir cómo exponer los métodos privados sin
-romper la encapsulación: por ejemplo, `agregarEvaluacionInterna` necesitaba
-algún punto de entrada público (`AgregarEvaluacion`) para poder probarlo
-desde afuera, pero ese wrapper no debía simplemente "reexportar" la lógica
-sin sentido, sino actuar como una puerta controlada. Lo mismo con
-`normalizarNombre`, que se invoca automáticamente desde el constructor para
-que el dato siempre quede consistente, en vez de obligar al usuario del
-paquete a acordarse de llamar a un método de normalización aparte.
+La realización de este proyecto permitió comprender de manera práctica cómo funciona la encapsulación en Go. Aunque inicialmente parece un concepto sencillo, la diferencia entre elementos exportados y no exportados se aprecia claramente cuando se intenta acceder a un método privado desde otro paquete y el compilador impide dicha operación.
 
-Como aprendizaje, quedó claro el valor de separar pruebas de caja blanca
-(internas) y caja negra (externas): las internas dan confianza de que la
-lógica interna no tiene casos borde rotos, y las externas dan confianza de
-que cualquiera que use el paquete desde afuera tendrá una API suficiente y
-seguro de que no puede meterse a romper invariantes internos por accidente
-(por ejemplo, agregar evaluaciones duplicadas sin pasar por la validación).
+A diferencia de otros lenguajes que utilizan palabras reservadas como private, Go basa el control de acceso en el uso de mayúsculas y minúsculas, siendo el paquete la verdadera unidad de encapsulación. Esta característica hace que el código sea sencillo y consistente.
 
-**Sobre el uso de IA:** se usó Claude como apoyo para generar la primera
-versión del código y de las pruebas, así como para automatizar la
-instalación de Go, la ejecución de los comandos (`go build`, `go vet`,
-`go test -cover`) y la generación de la captura de la terminal. Sin
-embargo, cada método fue revisado y se entiende su funcionamiento completo:
-por ejemplo, por qué `normalizarNombre` usa `strings.Fields` (para limpiar
-espacios extra automáticamente) en vez de un simple `strings.Split(" ")`, o
-por qué `validarEmail` busca el punto específicamente *después* de la
-arroba y no en cualquier parte del string (para no aceptar algo como
-`juan.perez@gmailcom`, que tiene un punto pero no en el dominio). El reto
-de "qué pasa si comento esta línea, ¿compila o no?" se verificó realmente
-ejecutando `go vet` con la línea descomentada, en vez de asumir el
-resultado.
+Uno de los principales desafíos consistió en definir la forma adecuada de exponer determinadas funcionalidades sin romper el encapsulamiento. Por ejemplo, agregarEvaluacionInterna() debía mantenerse privado, pero era necesario ofrecer un método público (AgregarEvaluacion()) que actuara como una interfaz controlada para realizar la operación respetando las validaciones correspondientes. De manera similar, normalizarNombre() se ejecuta automáticamente desde el constructor para asegurar que toda instancia mantenga datos consistentes desde su creación.
+
+Otra enseñanza importante fue comprender la diferencia entre las pruebas de caja blanca y las pruebas de caja negra. Las primeras permiten validar en profundidad la lógica interna del paquete, mientras que las segundas comprueban que la interfaz pública sea suficiente para cualquier usuario y que los elementos internos permanezcan protegidos.
+
+Uso de inteligencia artificial
+
+Como apoyo durante el desarrollo se utilizó Claude para generar una versión inicial del código y de las pruebas, además de facilitar la instalación de Go, la ejecución de herramientas como go build, go vet y go test, y la obtención de la captura de la terminal.
+
+No obstante, todo el código fue revisado y comprendido antes de su entrega. Se verificó el funcionamiento de cada método y se analizaron las decisiones de implementación, como el uso de strings.Fields() para eliminar espacios innecesarios al normalizar nombres, o la validación de que el punto del correo electrónico aparezca después de la arroba para evitar aceptar direcciones inválidas. Asimismo, las pruebas se ejecutaron realmente para confirmar los resultados obtenidos, en lugar de asumir su comportamiento.
